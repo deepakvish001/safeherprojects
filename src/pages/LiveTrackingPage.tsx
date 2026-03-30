@@ -101,11 +101,11 @@ const LiveTrackingPage = () => {
 
       {/* Map */}
       <div className="flex-1 relative">
-        {sharing && position ? (
+        {sharing && effectivePosition ? (
           <LiveTrackingMap
             className="h-full"
             trackedUsers={demoTrackedUsers}
-            myPosition={position}
+            myPosition={effectivePosition}
           />
         ) : (
           <div className="h-full flex flex-col items-center justify-center gap-6 px-8">
