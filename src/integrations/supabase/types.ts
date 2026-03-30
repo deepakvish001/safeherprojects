@@ -76,6 +76,54 @@ export type Database = {
           },
         ]
       }
+      incidents: {
+        Row: {
+          anonymous: boolean
+          category: Database["public"]["Enums"]["incident_category"]
+          created_at: string
+          description: string
+          id: string
+          location_lat: number
+          location_lng: number
+          location_name: string
+          reporter_id: string | null
+          severity: Database["public"]["Enums"]["incident_severity"]
+          title: string
+          updated_at: string
+          upvotes: number
+        }
+        Insert: {
+          anonymous?: boolean
+          category: Database["public"]["Enums"]["incident_category"]
+          created_at?: string
+          description?: string
+          id?: string
+          location_lat: number
+          location_lng: number
+          location_name?: string
+          reporter_id?: string | null
+          severity?: Database["public"]["Enums"]["incident_severity"]
+          title: string
+          updated_at?: string
+          upvotes?: number
+        }
+        Update: {
+          anonymous?: boolean
+          category?: Database["public"]["Enums"]["incident_category"]
+          created_at?: string
+          description?: string
+          id?: string
+          location_lat?: number
+          location_lng?: number
+          location_name?: string
+          reporter_id?: string | null
+          severity?: Database["public"]["Enums"]["incident_severity"]
+          title?: string
+          updated_at?: string
+          upvotes?: number
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -132,7 +180,15 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      incident_category:
+        | "harassment"
+        | "stalking"
+        | "unsafe_area"
+        | "theft"
+        | "suspicious_activity"
+        | "poor_lighting"
+        | "other"
+      incident_severity: "low" | "medium" | "high" | "critical"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -259,6 +315,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      incident_category: [
+        "harassment",
+        "stalking",
+        "unsafe_area",
+        "theft",
+        "suspicious_activity",
+        "poor_lighting",
+        "other",
+      ],
+      incident_severity: ["low", "medium", "high", "critical"],
+    },
   },
 } as const
