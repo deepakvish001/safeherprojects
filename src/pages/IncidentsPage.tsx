@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AlertTriangle, MapPin, ChevronDown, ChevronUp, Clock, Send, Shield, Eye, EyeOff, ThumbsUp, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -6,84 +6,37 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { type Category, type Severity, CATEGORIES, SEVERITY_CONFIG } from "@/data/incidentTypes";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
-
-
-interface DemoIncident {
+interface Incident {
   id: string;
   category: Category;
   severity: Severity;
   title: string;
   description: string;
-  locationName: string;
-  lat: number;
-  lng: number;
+  location_name: string;
+  location_lat: number;
+  location_lng: number;
   anonymous: boolean;
-  reporter: string;
+  reporter_id: string | null;
   upvotes: number;
-  createdAt: string;
+  created_at: string;
 }
 
-const DEMO_INCIDENTS: DemoIncident[] = [
-  {
-    id: "1",
-    category: "harassment",
-    severity: "high",
-    title: "Verbal harassment near bus stop",
-    description: "Group of men catcalling and following women near the main bus stop after 9 PM.",
-    locationName: "MI Road Bus Stop, Jaipur",
-    lat: 26.9124,
-    lng: 75.7873,
-    anonymous: false,
-    reporter: "Ananya S.",
-    upvotes: 14,
-    createdAt: "2h ago",
-  },
-  {
-    id: "2",
-    category: "poor_lighting",
-    severity: "medium",
-    title: "Dark alley near market",
-    description: "The lane between Johari Bazaar and Tripolia Bazaar has no streetlights. Very unsafe after dark.",
-    locationName: "Johari Bazaar Lane, Jaipur",
-    lat: 26.9220,
-    lng: 75.8235,
-    anonymous: true,
-    reporter: "Anonymous",
-    upvotes: 23,
-    createdAt: "5h ago",
-  },
-  {
-    id: "3",
-    category: "suspicious_activity",
-    severity: "medium",
-    title: "Unauthorized taxi drivers",
-    description: "Unlicensed taxi drivers approaching solo female travelers outside the train station. Be cautious.",
-    locationName: "Jaipur Junction Station",
-    lat: 26.9196,
-    lng: 75.7878,
-    anonymous: false,
-    reporter: "Meera R.",
-    upvotes: 8,
-    createdAt: "1d ago",
-  },
-  {
-    id: "4",
-    category: "theft",
-    severity: "high",
-    title: "Phone snatching on road",
-    description: "Two incidents of phone snatching by bike-borne men on this stretch this week.",
-    locationName: "Tonk Road, Jaipur",
-    lat: 26.8800,
-    lng: 75.8000,
-    anonymous: true,
-    reporter: "Anonymous",
-    upvotes: 31,
-    createdAt: "2d ago",
-  },
-];
+const timeAgo = (dateStr: string) => {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+};
 
 const IncidentsPage = () => {
+  const { user } = useAuth();
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"feed" | "report">("feed");
   const [category, setCategory] = useState<Category | null>(null);
   const [severity, setSeverity] = useState<Severity>("medium");
@@ -94,6 +47,20 @@ const IncidentsPage = () => {
   const [upvoted, setUpvoted] = useState<Set<string>>(new Set());
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
+  const fetchIncidents = async () => {
+    const { data, error } = await supabase
+      .from("incidents")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (!error && data) setIncidents(data as unknown as Incident[]);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchIncidents();
+  }, []);
+
   const resetForm = () => {
     setCategory(null);
     setSeverity("medium");
@@ -103,9 +70,24 @@ const IncidentsPage = () => {
     setAnonymous(false);
   };
 
-  const submitReport = () => {
+  const submitReport = async () => {
     if (!category || !title.trim()) {
       toast.error("Please select a category and add a title");
+      return;
+    }
+    const { error } = await supabase.from("incidents").insert({
+      category,
+      severity,
+      title: title.trim(),
+      description: description.trim(),
+      location_name: locationName || "Unknown Location",
+      location_lat: 28.6139,
+      location_lng: 77.209,
+      anonymous,
+      reporter_id: user?.id || null,
+    });
+    if (error) {
+      toast.error("Failed to submit report");
       return;
     }
     toast.success("Incident reported successfully!", {
@@ -113,6 +95,7 @@ const IncidentsPage = () => {
     });
     resetForm();
     setView("feed");
+    fetchIncidents();
   };
 
   const toggleUpvote = (id: string) => {
@@ -180,55 +163,33 @@ const IncidentsPage = () => {
           </div>
         </div>
 
-        {/* Title */}
         <div className="space-y-2">
           <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Title</label>
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Brief description of the incident"
-            className="bg-muted/50 border-border/50"
-          />
+          <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Brief description of the incident" className="bg-muted/50 border-border/50" />
         </div>
 
-        {/* Description */}
         <div className="space-y-2">
           <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Details</label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Describe what happened, when, and any identifying details..."
+            placeholder="Describe what happened..."
             rows={3}
             className="w-full rounded-lg bg-muted/50 border border-border/50 px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
           />
         </div>
 
-        {/* Location */}
         <div className="space-y-2">
           <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Location</label>
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input
-              value={locationName}
-              onChange={(e) => setLocationName(e.target.value)}
-              placeholder="Enter location or use current"
-              className="bg-muted/50 border-border/50 pl-9"
-            />
+            <Input value={locationName} onChange={(e) => setLocationName(e.target.value)} placeholder="Enter location or use current" className="bg-muted/50 border-border/50 pl-9" />
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-xs w-full"
-            onClick={() => {
-              setLocationName("Current Location — Jaipur, India");
-              toast.info("Using your current location");
-            }}
-          >
+          <Button variant="outline" size="sm" className="text-xs w-full" onClick={() => { setLocationName("Current Location — Delhi, India"); toast.info("Using your current location"); }}>
             <MapPin className="w-3 h-3 mr-1" /> Use Current Location
           </Button>
         </div>
 
-        {/* Anonymous toggle */}
         <div className="glass-card rounded-xl p-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {anonymous ? <EyeOff className="w-4 h-4 text-secondary" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
@@ -241,11 +202,10 @@ const IncidentsPage = () => {
             onClick={() => setAnonymous(!anonymous)}
             className={`w-11 h-6 rounded-full transition-colors relative ${anonymous ? "bg-secondary" : "bg-muted"}`}
           >
-            <div className={`w-4.5 h-4.5 w-[18px] h-[18px] rounded-full bg-foreground absolute top-[3px] transition-all ${anonymous ? "right-[3px]" : "left-[3px]"}`} />
+            <div className={`w-[18px] h-[18px] rounded-full bg-foreground absolute top-[3px] transition-all ${anonymous ? "right-[3px]" : "left-[3px]"}`} />
           </button>
         </div>
 
-        {/* Submit */}
         <Button className="w-full h-12 text-sm font-bold" onClick={submitReport}>
           <Send className="w-4 h-4 mr-2" /> Submit Report
         </Button>
@@ -269,9 +229,9 @@ const IncidentsPage = () => {
       {/* Summary */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "This Week", value: "4", icon: Clock, color: "text-warning" },
-          { label: "High Severity", value: "2", icon: AlertTriangle, color: "text-danger" },
-          { label: "Resolved", value: "1", icon: Shield, color: "text-safe" },
+          { label: "Total", value: String(incidents.length), icon: Clock, color: "text-warning" },
+          { label: "High+", value: String(incidents.filter((i) => i.severity === "high" || i.severity === "critical").length), icon: AlertTriangle, color: "text-danger" },
+          { label: "This Week", value: String(incidents.filter((i) => Date.now() - new Date(i.created_at).getTime() < 7 * 86400000).length), icon: Shield, color: "text-safe" },
         ].map((stat) => (
           <div key={stat.label} className="glass-card rounded-xl p-3 text-center">
             <stat.icon className={`w-4 h-4 ${stat.color} mx-auto mb-1`} />
@@ -281,88 +241,90 @@ const IncidentsPage = () => {
         ))}
       </div>
 
-      {/* Incident Feed */}
-      <div className="space-y-3">
-        {DEMO_INCIDENTS.map((incident, i) => {
-          const catInfo = CATEGORIES.find((c) => c.value === incident.category);
-          const sevCfg = SEVERITY_CONFIG[incident.severity];
-          const expanded = expandedId === incident.id;
-          const voted = upvoted.has(incident.id);
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        </div>
+      ) : incidents.length === 0 ? (
+        <div className="text-center py-12">
+          <Shield className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+          <p className="text-sm text-muted-foreground">No incidents reported yet. Stay safe!</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {incidents.map((incident, i) => {
+            const catInfo = CATEGORIES.find((c) => c.value === incident.category);
+            const sevCfg = SEVERITY_CONFIG[incident.severity];
+            const expanded = expandedId === incident.id;
+            const voted = upvoted.has(incident.id);
 
-          return (
-            <motion.div
-              key={incident.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.08 }}
-              className="glass-card rounded-2xl p-4 space-y-2"
-            >
-              {/* Header */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-2.5 flex-1">
-                  <span className="text-lg mt-0.5">{catInfo?.icon}</span>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-foreground leading-tight">{incident.title}</p>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <Badge className={`text-[10px] px-1.5 py-0 border-0 ${sevCfg.bg} ${sevCfg.color}`}>
-                        {sevCfg.label}
-                      </Badge>
-                      <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
-                        <Clock className="w-2.5 h-2.5" /> {incident.createdAt}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">
-                        by {incident.reporter}
-                      </span>
+            return (
+              <motion.div
+                key={incident.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.08 }}
+                className="glass-card rounded-2xl p-4 space-y-2"
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-2.5 flex-1">
+                    <span className="text-lg mt-0.5">{catInfo?.icon}</span>
+                    <div className="flex-1">
+                      <p className="text-sm font-bold text-foreground leading-tight">{incident.title}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        <Badge className={`text-[10px] px-1.5 py-0 border-0 ${sevCfg.bg} ${sevCfg.color}`}>
+                          {sevCfg.label}
+                        </Badge>
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                          <Clock className="w-2.5 h-2.5" /> {timeAgo(incident.created_at)}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">
+                          {incident.anonymous ? "Anonymous" : "Verified User"}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <button onClick={() => setExpandedId(expanded ? null : incident.id)}>
+                    {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                  </button>
                 </div>
-                <button onClick={() => setExpandedId(expanded ? null : incident.id)}>
-                  {expanded ? (
-                    <ChevronUp className="w-4 h-4 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
+
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <MapPin className="w-3 h-3 text-secondary" />
+                  {incident.location_name}
+                </div>
+
+                <AnimatePresence>
+                  {expanded && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <p className="text-xs text-muted-foreground leading-relaxed pt-1 border-t border-border/30 mt-1">
+                        {incident.description || "No additional details provided."}
+                      </p>
+                    </motion.div>
                   )}
-                </button>
-              </div>
+                </AnimatePresence>
 
-              {/* Location */}
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <MapPin className="w-3 h-3 text-secondary" />
-                {incident.locationName}
-              </div>
-
-              {/* Expanded description */}
-              <AnimatePresence>
-                {expanded && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="overflow-hidden"
+                <div className="flex items-center justify-end">
+                  <button
+                    onClick={() => toggleUpvote(incident.id)}
+                    className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
+                      voted ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
+                    }`}
                   >
-                    <p className="text-xs text-muted-foreground leading-relaxed pt-1 border-t border-border/30 mt-1">
-                      {incident.description}
-                    </p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Upvote */}
-              <div className="flex items-center justify-end">
-                <button
-                  onClick={() => toggleUpvote(incident.id)}
-                  className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors ${
-                    voted ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <ThumbsUp className="w-3 h-3" />
-                  {incident.upvotes + (voted ? 1 : 0)}
-                </button>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+                    <ThumbsUp className="w-3 h-3" />
+                    {incident.upvotes + (voted ? 1 : 0)}
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 };

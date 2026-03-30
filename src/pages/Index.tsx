@@ -1,13 +1,41 @@
+import { useState, useEffect } from "react";
 import { Shield, MapPin, Bell, Share2 } from "lucide-react";
 import SafeMap from "@/components/SafeMap";
 import SafetyScore from "@/components/SafetyScore";
 import SOSButton from "@/components/SOSButton";
 import { motion } from "framer-motion";
-import { DEMO_INCIDENTS } from "@/data/incidents";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { type IncidentMarker } from "@/data/incidents";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [incidents, setIncidents] = useState<IncidentMarker[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("incidents")
+      .select("id, category, severity, title, location_lat, location_lng, location_name, upvotes, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        if (data) {
+          setIncidents(
+            data.map((d: any) => ({
+              id: d.id,
+              category: d.category,
+              severity: d.severity,
+              title: d.title,
+              lat: d.location_lat,
+              lng: d.location_lng,
+              locationName: d.location_name,
+              upvotes: d.upvotes,
+              createdAt: d.created_at,
+            }))
+          );
+        }
+      });
+  }, []);
   return (
     <div className="relative">
       {/* Header */}
@@ -32,7 +60,7 @@ const Index = () => {
 
       {/* Map with incident overlays */}
       <div className="pt-14">
-        <SafeMap className="h-[55vh]" incidents={DEMO_INCIDENTS} />
+        <SafeMap className="h-[55vh]" incidents={incidents} />
       </div>
 
       {/* Bottom Panel */}

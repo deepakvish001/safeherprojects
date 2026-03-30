@@ -1,16 +1,28 @@
-import { Shield, Volume2, Phone } from "lucide-react";
+import { Shield, Volume2, Phone, Mic, MicOff } from "lucide-react";
 import SOSButton from "@/components/SOSButton";
 import FakeCall from "@/components/FakeCall";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
 import { useNavigate } from "react-router-dom";
+import { useVoiceActivation } from "@/hooks/useVoiceActivation";
 
 const SOSPage = () => {
   const [alarmActive, setAlarmActive] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const { data: contacts, isLoading } = useEmergencyContacts();
   const navigate = useNavigate();
+
+  const onVoiceSOS = useCallback(() => {
+    toast.error("🆘 Voice command detected! SOS triggered.", { description: 'You said "Help"' });
+  }, []);
+
+  const { listening, supported } = useVoiceActivation({
+    keyword: "help",
+    onTriggered: onVoiceSOS,
+    enabled: voiceEnabled,
+  });
 
   const triggerAlarm = () => {
     setAlarmActive(true);
@@ -63,6 +75,28 @@ const SOSPage = () => {
       {/* Tools */}
       <div className="space-y-3">
         <h3 className="text-sm font-bold text-foreground">Safety Tools</h3>
+
+        {/* Voice Activation */}
+        {supported && (
+          <button
+            onClick={() => setVoiceEnabled(!voiceEnabled)}
+            className={`flex items-center gap-3 w-full p-4 rounded-xl glass-card transition-colors ${voiceEnabled ? "border-safe/50" : "hover:border-secondary/50"}`}
+          >
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${voiceEnabled ? "bg-safe/20" : "bg-muted"}`}>
+              {voiceEnabled ? <Mic className="w-5 h-5 text-safe" /> : <MicOff className="w-5 h-5 text-muted-foreground" />}
+            </div>
+            <div className="text-left flex-1">
+              <p className="font-semibold text-foreground">Voice SOS</p>
+              <p className="text-xs text-muted-foreground">
+                {voiceEnabled ? 'Listening… say "Help" to trigger SOS' : 'Say "Help" to trigger SOS'}
+              </p>
+            </div>
+            {voiceEnabled && (
+              <span className="w-2 h-2 rounded-full bg-safe animate-pulse" />
+            )}
+          </button>
+        )}
+
         <FakeCall />
         <button
           onClick={triggerAlarm}

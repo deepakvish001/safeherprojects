@@ -16,21 +16,29 @@ import TripsPage from "./pages/TripsPage";
 import AuthPage from "./pages/AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import LiveTrackingPage from "./pages/LiveTrackingPage";
+import SplashPage from "./pages/SplashPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isDemo } = useAuth();
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
-  if (!user) return <Navigate to="/auth" replace />;
+  if (!user && !isDemo) return <Navigate to="/splash" replace />;
   return <>{children}</>;
 };
 
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isDemo } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user || isDemo) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
+const SplashRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading, isDemo } = useAuth();
+  if (loading) return null;
+  if (user || isDemo) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
@@ -42,6 +50,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
+            <Route path="/splash" element={<SplashRoute><SplashPage /></SplashRoute>} />
             <Route path="/auth" element={<AuthRoute><AuthPage /></AuthRoute>} />
             <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
