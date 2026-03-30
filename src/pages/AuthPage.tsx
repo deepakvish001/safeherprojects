@@ -40,7 +40,8 @@ const AuthPage = () => {
           toast.error(error.message);
         }
       } else {
-        toast.success("Check your email to confirm your account!");
+        toast.success("Welcome to SafeHer! 🎉");
+        navigate("/onboarding");
       }
     }
     setLoading(false);
