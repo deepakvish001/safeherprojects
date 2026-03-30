@@ -14,7 +14,116 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      guardian_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          read: boolean
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          read?: boolean
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
+      guardian_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          guardian_id: string
+          id: string
+          rating: number
+          reviewer_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          guardian_id: string
+          id?: string
+          rating: number
+          reviewer_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          guardian_id?: string
+          id?: string
+          rating?: number
+          reviewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "guardian_reviews_guardian_id_fkey"
+            columns: ["guardian_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
+          created_at: string
+          full_name: string
+          id: string
+          is_guardian: boolean
+          languages: string[] | null
+          location_lat: number | null
+          location_lng: number | null
+          skills: string[] | null
+          trust_score: number
+          updated_at: string
+          verified: boolean
+        }
+        Insert: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          full_name?: string
+          id: string
+          is_guardian?: boolean
+          languages?: string[] | null
+          location_lat?: number | null
+          location_lng?: number | null
+          skills?: string[] | null
+          trust_score?: number
+          updated_at?: string
+          verified?: boolean
+        }
+        Update: {
+          avatar_url?: string | null
+          bio?: string | null
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_guardian?: boolean
+          languages?: string[] | null
+          location_lat?: number | null
+          location_lng?: number | null
+          skills?: string[] | null
+          trust_score?: number
+          updated_at?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
