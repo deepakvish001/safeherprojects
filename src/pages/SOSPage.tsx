@@ -65,7 +65,7 @@ const SOSPage = () => {
       <div className="text-center space-y-2">
         <Shield className="w-12 h-12 text-primary mx-auto" />
         <h1 className="text-2xl font-black text-foreground">Emergency SOS</h1>
-        <p className="text-sm text-muted-foreground">Press the button below or shake your phone</p>
+        <p className="text-sm text-muted-foreground">Press the button, shake your phone, or say "Help"</p>
       </div>
 
       <motion.div
