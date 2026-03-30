@@ -12,6 +12,7 @@ const mainItems = [
 ];
 
 const moreItems = [
+  { icon: Radio, label: "Live Track", path: "/live-tracking" },
   { icon: Luggage, label: "Trips", path: "/trips" },
   { icon: AlertTriangle, label: "Incidents", path: "/incidents" },
   { icon: Phone, label: "Services", path: "/services" },
