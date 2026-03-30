@@ -43,6 +43,11 @@ const OnboardingPage = () => {
       toast.error("Add at least one emergency contact");
       return;
     }
+    if (isDemo) {
+      toast.success("Demo mode — contacts saved locally! 🎉");
+      navigate("/");
+      return;
+    }
     setSaving(true);
     const { error } = await supabase.from("emergency_contacts").insert(
       valid.map((c, i) => ({

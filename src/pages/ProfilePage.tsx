@@ -29,6 +29,7 @@ const ProfilePage = () => {
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
+      if (isDemo) return DEMO_PROFILE;
       const { data } = await supabase.from("profiles").select("*").eq("id", user!.id).single();
       return data;
     },

@@ -145,11 +145,29 @@ const TripsPage = () => {
     setContacts((prev) => prev.filter((c) => c.id !== id));
   };
 
-  const createTrip = () => {
+  const createTrip = async () => {
     if (!title.trim() || !origin.trim() || !destination.trim() || !startDate || !endDate) {
       toast.error("Please fill in all required fields");
       return;
     }
+
+    if (!isDemo && user) {
+      const { data, error } = await supabase.from("trips").insert({
+        user_id: user.id,
+        title,
+        origin,
+        destination,
+        start_date: startDate,
+        end_date: endDate,
+        notes,
+      }).select().single();
+
+      if (error) {
+        toast.error("Failed to save trip");
+        return;
+      }
+    }
+
     const newTrip: Trip = {
       id: Date.now().toString(),
       title,

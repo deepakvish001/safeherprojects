@@ -34,7 +34,7 @@ const timeAgo = (dateStr: string) => {
 };
 
 const IncidentsPage = () => {
-  const { user } = useAuth();
+  const { user, isDemo } = useAuth();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"feed" | "report">("feed");

@@ -1,9 +1,42 @@
+import { useState, useEffect } from "react";
 import SafeMap from "@/components/SafeMap";
 import { Map, AlertTriangle, Navigation } from "lucide-react";
 import { motion } from "framer-motion";
-import { DEMO_INCIDENTS } from "@/data/incidents";
+import { DEMO_INCIDENTS, type IncidentMarker } from "@/data/incidents";
+import { supabase } from "@/integrations/supabase/client";
 
 const RoutesPage = () => {
+  const [incidents, setIncidents] = useState<IncidentMarker[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("incidents")
+      .select("id, category, severity, title, location_lat, location_lng, location_name, upvotes, created_at")
+      .order("created_at", { ascending: false })
+      .limit(20)
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setIncidents(
+            data.map((d: any) => ({
+              id: d.id,
+              category: d.category,
+              severity: d.severity,
+              title: d.title,
+              lat: d.location_lat,
+              lng: d.location_lng,
+              locationName: d.location_name,
+              upvotes: d.upvotes,
+              createdAt: d.created_at,
+            }))
+          );
+        } else {
+          setIncidents(DEMO_INCIDENTS);
+        }
+      });
+  }, []);
+
+  const highSeverity = incidents.filter((i) => i.severity === "high" || i.severity === "critical");
+
   return (
     <div className="space-y-4">
       <div className="px-4 pt-4 space-y-2">
@@ -14,7 +47,7 @@ const RoutesPage = () => {
         <p className="text-sm text-muted-foreground">Navigate safely with danger zone alerts</p>
       </div>
 
-      <SafeMap className="h-[40vh] mx-4 rounded-2xl overflow-hidden" incidents={DEMO_INCIDENTS} />
+      <SafeMap className="h-[40vh] mx-4 rounded-2xl overflow-hidden" incidents={incidents} />
 
       {/* Route Suggestion */}
       <motion.div
@@ -38,25 +71,29 @@ const RoutesPage = () => {
         </div>
       </motion.div>
 
-      {/* Danger Zones - now driven by incidents */}
+      {/* Danger Zones */}
       <div className="mx-4 glass-card rounded-2xl p-4 space-y-3">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-danger" />
           <h3 className="font-bold text-sm text-foreground">Reported Incidents Nearby</h3>
         </div>
-        {DEMO_INCIDENTS.filter((i) => i.severity === "high" || i.severity === "critical").map((incident) => (
-          <div key={incident.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-            <div>
-              <p className="text-sm font-semibold text-foreground">{incident.title}</p>
-              <p className="text-xs text-muted-foreground">{incident.locationName} • {incident.createdAt}</p>
+        {highSeverity.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No high-severity incidents nearby</p>
+        ) : (
+          highSeverity.map((incident) => (
+            <div key={incident.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
+              <div>
+                <p className="text-sm font-semibold text-foreground">{incident.title}</p>
+                <p className="text-xs text-muted-foreground">{incident.locationName}</p>
+              </div>
+              <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+                incident.severity === "critical" ? "bg-danger/10 text-danger" : "bg-primary/10 text-primary"
+              }`}>
+                {incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1)}
+              </span>
             </div>
-            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-              incident.severity === "critical" ? "bg-danger/10 text-danger" : "bg-primary/10 text-primary"
-            }`}>
-              {incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1)}
-            </span>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
