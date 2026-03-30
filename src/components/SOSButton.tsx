@@ -2,8 +2,11 @@ import { useState, useCallback } from "react";
 import { Shield } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const SOSButton = () => {
+  const { user } = useAuth();
   const [active, setActive] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const [timerId, setTimerId] = useState<NodeJS.Timeout | null>(null);
@@ -21,7 +24,7 @@ const SOSButton = () => {
       }
     }, 1000);
     setTimerId(id);
-  }, []);
+  }, [user]);
 
   const cancelSOS = useCallback(() => {
     if (timerId) clearInterval(timerId);
@@ -30,17 +33,54 @@ const SOSButton = () => {
     toast.info("SOS cancelled");
   }, [timerId]);
 
-  const triggerSOS = () => {
-    toast.success("🆘 SOS Alert Sent!", {
-      description: "Emergency contacts have been notified with your location.",
-      duration: 5000,
-    });
-    // In production: send location to emergency contacts, start recording
-    navigator.geolocation?.getCurrentPosition((pos) => {
-      console.log("SOS Location:", pos.coords.latitude, pos.coords.longitude);
-    });
+  const triggerSOS = async () => {
     setActive(false);
     setCountdown(5);
+
+    // Get location
+    let lat: number | undefined;
+    let lng: number | undefined;
+    try {
+      const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 })
+      );
+      lat = pos.coords.latitude;
+      lng = pos.coords.longitude;
+    } catch {
+      console.warn("Could not get location for SOS");
+    }
+
+    toast.success("🆘 SOS Alert Sent!", {
+      description: "Emergency contacts are being notified with your location.",
+      duration: 5000,
+    });
+
+    // Send SMS via edge function if user is authenticated
+    if (user) {
+      try {
+        const { data, error } = await supabase.functions.invoke("send-sos-sms", {
+          body: {
+            user_id: user.id,
+            lat,
+            lng,
+            message: "Emergency! I need help immediately.",
+            from_phone: "+15017122661", // Twilio number - should be configured
+          },
+        });
+        if (error) {
+          console.error("SOS SMS error:", error);
+          toast.error("SMS alerts could not be sent");
+        } else if (data?.sent > 0) {
+          toast.success(`📱 ${data.sent} emergency contact(s) notified via SMS`);
+        } else if (data?.sent === 0) {
+          toast.warning("No emergency contacts set up. Add them in your profile.");
+        }
+      } catch (err) {
+        console.error("SOS function error:", err);
+      }
+    } else {
+      toast.warning("Sign in to send SMS alerts to emergency contacts");
+    }
   };
 
   return (
@@ -74,7 +114,7 @@ const SOSButton = () => {
 
             <p className="text-xl font-bold text-foreground">Sending SOS in {countdown}s...</p>
             <p className="text-muted-foreground text-center px-8">
-              Your location and emergency alert will be sent to all emergency contacts.
+              Your location and emergency alert will be sent to all emergency contacts via SMS.
             </p>
 
             <button
