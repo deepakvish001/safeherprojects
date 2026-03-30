@@ -75,6 +75,28 @@ const SOSPage = () => {
       {/* Tools */}
       <div className="space-y-3">
         <h3 className="text-sm font-bold text-foreground">Safety Tools</h3>
+
+        {/* Voice Activation */}
+        {supported && (
+          <button
+            onClick={() => setVoiceEnabled(!voiceEnabled)}
+            className={`flex items-center gap-3 w-full p-4 rounded-xl glass-card transition-colors ${voiceEnabled ? "border-safe/50" : "hover:border-secondary/50"}`}
+          >
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${voiceEnabled ? "bg-safe/20" : "bg-muted"}`}>
+              {voiceEnabled ? <Mic className="w-5 h-5 text-safe" /> : <MicOff className="w-5 h-5 text-muted-foreground" />}
+            </div>
+            <div className="text-left flex-1">
+              <p className="font-semibold text-foreground">Voice SOS</p>
+              <p className="text-xs text-muted-foreground">
+                {voiceEnabled ? 'Listening… say "Help" to trigger SOS' : 'Say "Help" to trigger SOS'}
+              </p>
+            </div>
+            {voiceEnabled && (
+              <span className="w-2 h-2 rounded-full bg-safe animate-pulse" />
+            )}
+          </button>
+        )}
+
         <FakeCall />
         <button
           onClick={triggerAlarm}
