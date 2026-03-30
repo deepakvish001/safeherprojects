@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from "react-leaflet";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -14,7 +13,7 @@ L.Icon.Default.mergeOptions({
 const dangerZones = [
   { lat: 28.6139, lng: 77.209, radius: 500, level: "high", name: "Chandni Chowk Late Night" },
   { lat: 28.6329, lng: 77.2195, radius: 350, level: "medium", name: "Old Delhi Station Area" },
-  { lat: 28.5672, lng: 77.2100, radius: 400, level: "high", name: "Sarai Kale Khan" },
+  { lat: 28.5672, lng: 77.21, radius: 400, level: "high", name: "Sarai Kale Khan" },
 ];
 
 const emergencyServices = [
@@ -29,82 +28,65 @@ const serviceIcons: Record<string, string> = {
   hotel: "🏨",
 };
 
-function LocationMarker() {
-  const [position, setPosition] = useState<[number, number] | null>(null);
-  const map = useMap();
-
-  useEffect(() => {
-    map.locate({ setView: true, maxZoom: 14 });
-    map.on("locationfound", (e) => {
-      setPosition([e.latlng.lat, e.latlng.lng]);
-    });
-    map.on("locationerror", () => {
-      // Default to New Delhi if location unavailable
-      map.setView([28.6139, 77.209], 13);
-    });
-  }, [map]);
-
-  return position ? (
-    <Marker position={position}>
-      <Popup>📍 You are here</Popup>
-    </Marker>
-  ) : null;
-}
-
 interface SafeMapProps {
   className?: string;
 }
 
 const SafeMap = ({ className }: SafeMapProps) => {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstance = useRef<L.Map | null>(null);
+
+  useEffect(() => {
+    if (!mapRef.current || mapInstance.current) return;
+
+    const map = L.map(mapRef.current, { zoomControl: false }).setView([28.6139, 77.209], 13);
+    mapInstance.current = map;
+
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    }).addTo(map);
+
+    // User location
+    map.locate({ setView: true, maxZoom: 14 });
+    map.on("locationfound", (e) => {
+      L.marker(e.latlng).addTo(map).bindPopup("📍 You are here");
+    });
+
+    // Danger zones
+    dangerZones.forEach((zone) => {
+      L.circle([zone.lat, zone.lng], {
+        radius: zone.radius,
+        color: zone.level === "high" ? "#E63946" : "#F4A261",
+        fillColor: zone.level === "high" ? "#E63946" : "#F4A261",
+        fillOpacity: 0.2,
+        weight: 2,
+      })
+        .addTo(map)
+        .bindPopup(`<b>⚠️ ${zone.name}</b><br/>Risk: ${zone.level.toUpperCase()}`);
+    });
+
+    // Emergency services
+    emergencyServices.forEach((svc) => {
+      L.marker([svc.lat, svc.lng], {
+        icon: L.divIcon({
+          html: `<div style="font-size:24px;text-align:center">${serviceIcons[svc.type]}</div>`,
+          iconSize: [30, 30],
+          className: "bg-transparent",
+        }),
+      })
+        .addTo(map)
+        .bindPopup(svc.name);
+    });
+
+    return () => {
+      map.remove();
+      mapInstance.current = null;
+    };
+  }, []);
+
   return (
     <div className={className}>
-      <MapContainer
-        center={[28.6139, 77.209]}
-        zoom={13}
-        className="w-full h-full rounded-xl"
-        style={{ minHeight: "400px" }}
-        zoomControl={false}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://carto.com/">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-        />
-        <LocationMarker />
-
-        {dangerZones.map((zone, i) => (
-          <Circle
-            key={i}
-            center={[zone.lat, zone.lng]}
-            radius={zone.radius}
-            pathOptions={{
-              color: zone.level === "high" ? "#E63946" : "#F4A261",
-              fillColor: zone.level === "high" ? "#E63946" : "#F4A261",
-              fillOpacity: 0.2,
-              weight: 2,
-            }}
-          >
-            <Popup>
-              <span className="font-bold">⚠️ {zone.name}</span>
-              <br />
-              Risk Level: {zone.level.toUpperCase()}
-            </Popup>
-          </Circle>
-        ))}
-
-        {emergencyServices.map((svc, i) => (
-          <Marker
-            key={i}
-            position={[svc.lat, svc.lng]}
-            icon={L.divIcon({
-              html: `<div style="font-size:24px;text-align:center">${serviceIcons[svc.type]}</div>`,
-              iconSize: [30, 30],
-              className: "bg-transparent",
-            })}
-          >
-            <Popup>{svc.name}</Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+      <div ref={mapRef} className="w-full h-full rounded-xl" style={{ minHeight: "400px" }} />
     </div>
   );
 };
