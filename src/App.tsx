@@ -16,6 +16,7 @@ import TripsPage from "./pages/TripsPage";
 import AuthPage from "./pages/AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import LiveTrackingPage from "./pages/LiveTrackingPage";
+import SplashPage from "./pages/SplashPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
