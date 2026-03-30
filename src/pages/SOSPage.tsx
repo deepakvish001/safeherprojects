@@ -10,8 +10,19 @@ import { useVoiceActivation } from "@/hooks/useVoiceActivation";
 
 const SOSPage = () => {
   const [alarmActive, setAlarmActive] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const { data: contacts, isLoading } = useEmergencyContacts();
   const navigate = useNavigate();
+
+  const onVoiceSOS = useCallback(() => {
+    toast.error("🆘 Voice command detected! SOS triggered.", { description: 'You said "Help"' });
+  }, []);
+
+  const { listening, supported } = useVoiceActivation({
+    keyword: "help",
+    onTriggered: onVoiceSOS,
+    enabled: voiceEnabled,
+  });
 
   const triggerAlarm = () => {
     setAlarmActive(true);
