@@ -75,6 +75,12 @@ const IncidentsPage = () => {
       toast.error("Please select a category and add a title");
       return;
     }
+    if (isDemo) {
+      toast.info("Sign up to report incidents — demo mode is read-only");
+      resetForm();
+      setView("feed");
+      return;
+    }
     const { error } = await supabase.from("incidents").insert({
       category,
       severity,
