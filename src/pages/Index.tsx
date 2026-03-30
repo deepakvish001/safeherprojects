@@ -4,6 +4,7 @@ import SafetyScore from "@/components/SafetyScore";
 import SOSButton from "@/components/SOSButton";
 import { motion } from "framer-motion";
 import { DEMO_INCIDENTS } from "@/data/incidents";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   return (
