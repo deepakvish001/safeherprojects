@@ -30,12 +30,20 @@ const LiveTrackingPage = () => {
     // Create demo tracked contacts that move slightly around user position
     const interval = setInterval(() => {
       const baseContacts = contacts?.slice(0, 3) || [];
+      if (baseContacts.length === 0) {
+        // If no contacts, show demo ones
+        setDemoTrackedUsers([
+          { id: "demo-1", name: "Mom", lat: effectivePosition.lat + Math.sin(Date.now() / 3000) * 0.003 + 0.002, lng: effectivePosition.lng + Math.cos(Date.now() / 4000) * 0.003 + 0.001, timestamp: Date.now() },
+          { id: "demo-2", name: "Best Friend", lat: effectivePosition.lat + Math.sin(Date.now() / 3000 + 2) * 0.003 + 0.004, lng: effectivePosition.lng + Math.cos(Date.now() / 4000 + 3) * 0.003 + 0.002, timestamp: Date.now() },
+        ]);
+        return;
+      }
       setDemoTrackedUsers(
         baseContacts.map((c, i) => ({
           id: c.id,
           name: c.name,
-          lat: position.lat + (Math.sin(Date.now() / 3000 + i * 2) * 0.003) + (i + 1) * 0.002,
-          lng: position.lng + (Math.cos(Date.now() / 4000 + i * 3) * 0.003) + (i + 1) * 0.001,
+          lat: effectivePosition.lat + (Math.sin(Date.now() / 3000 + i * 2) * 0.003) + (i + 1) * 0.002,
+          lng: effectivePosition.lng + (Math.cos(Date.now() / 4000 + i * 3) * 0.003) + (i + 1) * 0.001,
           timestamp: Date.now(),
         }))
       );
@@ -43,18 +51,22 @@ const LiveTrackingPage = () => {
 
     // Initial set
     const baseContacts = contacts?.slice(0, 3) || [];
-    setDemoTrackedUsers(
-      baseContacts.map((c, i) => ({
-        id: c.id,
-        name: c.name,
-        lat: position.lat + (i + 1) * 0.002,
-        lng: position.lng + (i + 1) * 0.001,
-        timestamp: Date.now(),
-      }))
-    );
+    const initialUsers = baseContacts.length > 0
+      ? baseContacts.map((c, i) => ({
+          id: c.id,
+          name: c.name,
+          lat: effectivePosition.lat + (i + 1) * 0.002,
+          lng: effectivePosition.lng + (i + 1) * 0.001,
+          timestamp: Date.now(),
+        }))
+      : [
+          { id: "demo-1", name: "Mom", lat: effectivePosition.lat + 0.002, lng: effectivePosition.lng + 0.001, timestamp: Date.now() },
+          { id: "demo-2", name: "Best Friend", lat: effectivePosition.lat + 0.004, lng: effectivePosition.lng + 0.002, timestamp: Date.now() },
+        ];
+    setDemoTrackedUsers(initialUsers);
 
     return () => clearInterval(interval);
-  }, [sharing, position, contacts]);
+  }, [sharing, effectivePosition?.lat, effectivePosition?.lng, contacts]);
 
   const shareLink = () => {
     const link = `${window.location.origin}/track/${user?.id}`;
