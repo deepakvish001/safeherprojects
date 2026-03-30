@@ -143,6 +143,27 @@ const AuthPage = () => {
             {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
             {!loading && <ArrowRight className="w-4 h-4" />}
           </motion.button>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-2">
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-muted-foreground">or</span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+
+          {/* Demo Mode */}
+          <motion.button
+            type="button"
+            whileTap={{ scale: 0.98 }}
+            onClick={() => {
+              enterDemoMode();
+              toast.success("Welcome to Demo Mode! 🎉");
+              navigate("/");
+            }}
+            className="w-full py-3 rounded-xl bg-secondary/10 text-secondary font-bold flex items-center justify-center gap-2 border border-secondary/20"
+          >
+            🎯 Explore Demo Mode
+          </motion.button>
         </form>
       </motion.div>
     </div>
