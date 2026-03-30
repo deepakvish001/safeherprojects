@@ -1,41 +1,50 @@
 
 
-# SafeHer — Feature Coverage Assessment & Polish Plan
+# SafeHer — Fix All Features & Next Improvements Plan
 
-## Current Status
+## Issues Found (Must Fix)
 
-Your app already implements **all 12 features** from your problem statement. Here's the mapping:
+### 1. Demo Mode button missing from Splash Page
+`SplashPage.tsx` only has "Get Started" (→ auth). There's no "Explore Demo Mode" button, so judges can't bypass sign-up. The `enterDemoMode` function exists in `AuthContext` but is never called from the splash screen.
 
-| # | Feature | Status | Where |
-|---|---------|--------|-------|
-| 1 | One-Tap SOS | ✅ Built | SOSButton + Twilio edge function |
-| 2 | Live Location Tracking | ✅ Built | LiveTrackingPage + Realtime broadcast |
-| 3 | Safe Route Navigation | ✅ Built | RoutesPage |
-| 4 | Danger Zone Alerts | ✅ Built | SafeMap incident overlays |
-| 5 | Guardian Network | ✅ Built | GuardiansPage with chat |
-| 6 | Verified Profiles & Trust Score | ✅ Built | Trust scores + verified badges on guardians |
-| 7 | Voice & Gesture Activation | ✅ Built | Shake-to-SOS on SOSPage |
-| 8 | Offline Emergency Mode | ✅ Built | Twilio SMS edge function |
-| 9 | Emergency Services Finder | ✅ Built | ServicesPage + home dashboard |
-| 10 | Incident Reporting | ✅ Built | IncidentsPage with feed + report form |
-| 11 | Trip Sharing | ✅ Built | TripsPage with alerts |
-| 12 | Fake Call / Alarm | ✅ Built | FakeCall + Loud Alarm on SOSPage |
+**Fix**: Add a "Try Demo" button below "Get Started" that calls `enterDemoMode()` and navigates to `/`.
 
-## What to Do Next
+### 2. RoutesPage uses stale static `DEMO_INCIDENTS`
+`RoutesPage.tsx` imports `DEMO_INCIDENTS` from `@/data/incidents.ts` (hardcoded static data) instead of fetching from the database like `Index.tsx` and `IncidentsPage.tsx` do. The "Reported Incidents Nearby" section shows old static entries with relative timestamps like "2h ago" that never update.
 
-The app is **functionally complete** for your hackathon. You've already published it. Here's what would make the biggest impact for judges:
+**Fix**: Fetch incidents from the database on mount, same pattern as `Index.tsx`. Fall back to `DEMO_INCIDENTS` if fetch returns empty.
 
-### Option A: Polish for Demo
-- Add a **splash/landing screen** before auth showing the 3-line summary (Prevention → Protection → Response) with animated shield
-- Add **voice activation** ("Help" keyword) using Web Speech API alongside the existing shake detection
-- Add a **demo mode** toggle so judges can explore without signing up
+### 3. TripsPage is fully local-only (demo data, no DB persistence)
+`TripsPage.tsx` uses `DEMO_TRIPS` in local state. New trips aren't saved to the `trips` table. The table and RLS policies exist but aren't used.
 
-### Option B: Deepen Backend Integration
-- Connect incidents, trips, and guardians to real database tables (currently demo data)
-- Add real-time guardian chat via Supabase Realtime (currently simulated replies)
+**Fix**: Fetch trips from the `trips` table on mount, fall back to `DEMO_TRIPS` for demo mode. Wire `createTrip` to insert into the database for authenticated users.
 
-### Option C: No Changes
-The app is ready to demo as-is. Focus on your **1-minute speaking script** instead.
+### 4. Incidents can't be submitted in demo mode
+The `reporter_id = auth.uid()` RLS policy blocks inserts for the demo user. This is expected but means the "Report Incident" form silently fails in demo mode.
 
-Which direction would you like to go?
+**Fix**: Show a toast in demo mode saying "Sign up to report incidents" instead of attempting the insert.
+
+### 5. ProfilePage crashes in demo mode
+`ProfilePage.tsx` queries `profiles` table with `user!.id` which is the fake "demo-user-id" — this won't match any row and the page shows "Loading..." forever for the name.
+
+**Fix**: In demo mode, skip the DB query and show hardcoded demo profile data.
+
+### 6. OnboardingPage insert fails in demo mode
+Same RLS issue — `user!.id` is the fake demo ID, so emergency contact inserts fail silently.
+
+**Fix**: Show a message in demo mode that contacts are simulated, or skip the insert and just navigate home.
+
+## Files to Edit
+
+| File | Change |
+|------|--------|
+| `src/pages/SplashPage.tsx` | Add "Explore Demo" button |
+| `src/pages/RoutesPage.tsx` | Fetch incidents from DB, fallback to static |
+| `src/pages/TripsPage.tsx` | Wire to `trips` table, fallback for demo |
+| `src/pages/IncidentsPage.tsx` | Guard `submitReport` for demo mode |
+| `src/pages/ProfilePage.tsx` | Show demo profile when `isDemo` |
+| `src/pages/OnboardingPage.tsx` | Handle demo mode gracefully |
+
+## Estimated Scope
+6 files edited, no new tables or migrations needed. All existing DB tables and RLS policies are already correct.
 
