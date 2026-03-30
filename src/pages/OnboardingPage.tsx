@@ -13,7 +13,7 @@ interface ContactForm {
 }
 
 const OnboardingPage = () => {
-  const { user } = useAuth();
+  const { user, isDemo } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [contacts, setContacts] = useState<ContactForm[]>([
