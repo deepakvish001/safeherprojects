@@ -6,7 +6,7 @@ import SOSButton from "@/components/SOSButton";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { type IncidentMarker } from "@/data/incidents";
+import type { IncidentMarker } from "@/data/incidents";
 
 const Index = () => {
   const navigate = useNavigate();
