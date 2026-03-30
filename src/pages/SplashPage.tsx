@@ -29,6 +29,7 @@ const features = [
 
 const SplashPage = () => {
   const navigate = useNavigate();
+  const { enterDemoMode } = useAuth();
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 overflow-hidden relative">
