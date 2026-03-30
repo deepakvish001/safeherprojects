@@ -13,7 +13,7 @@ interface ContactForm {
 }
 
 const OnboardingPage = () => {
-  const { user } = useAuth();
+  const { user, isDemo } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [contacts, setContacts] = useState<ContactForm[]>([
@@ -41,6 +41,11 @@ const OnboardingPage = () => {
     const valid = contacts.filter((c) => c.name.trim() && c.phone.trim());
     if (valid.length === 0) {
       toast.error("Add at least one emergency contact");
+      return;
+    }
+    if (isDemo) {
+      toast.success("Demo mode — contacts saved locally! 🎉");
+      navigate("/");
       return;
     }
     setSaving(true);

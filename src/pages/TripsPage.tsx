@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   MapPin, Calendar, Plus, Share2, ArrowLeft, Send, Clock,
   ChevronRight, Trash2, Navigation, Bell, BellOff, UserPlus, X
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 type TripStatus = "planned" | "active" | "completed" | "cancelled";
 
@@ -68,9 +70,35 @@ const DEMO_TRIPS: Trip[] = [
 ];
 
 const TripsPage = () => {
+  const { user, isDemo } = useAuth();
   const [view, setView] = useState<"list" | "create" | "detail">("list");
   const [trips, setTrips] = useState<Trip[]>(DEMO_TRIPS);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+
+  useEffect(() => {
+    if (isDemo || !user) return;
+    supabase
+      .from("trips")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setTrips(
+            data.map((t: any) => ({
+              id: t.id,
+              title: t.title,
+              origin: t.origin,
+              destination: t.destination,
+              startDate: t.start_date,
+              endDate: t.end_date,
+              status: t.status,
+              notes: t.notes || "",
+              sharedWith: [],
+            }))
+          );
+        }
+      });
+  }, [user, isDemo]);
 
   // Create form state
   const [title, setTitle] = useState("");
@@ -117,11 +145,29 @@ const TripsPage = () => {
     setContacts((prev) => prev.filter((c) => c.id !== id));
   };
 
-  const createTrip = () => {
+  const createTrip = async () => {
     if (!title.trim() || !origin.trim() || !destination.trim() || !startDate || !endDate) {
       toast.error("Please fill in all required fields");
       return;
     }
+
+    if (!isDemo && user) {
+      const { data, error } = await supabase.from("trips").insert({
+        user_id: user.id,
+        title,
+        origin,
+        destination,
+        start_date: startDate,
+        end_date: endDate,
+        notes,
+      }).select().single();
+
+      if (error) {
+        toast.error("Failed to save trip");
+        return;
+      }
+    }
+
     const newTrip: Trip = {
       id: Date.now().toString(),
       title,

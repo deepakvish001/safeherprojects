@@ -9,8 +9,15 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
+const DEMO_PROFILE = {
+  full_name: "Demo User",
+  trust_score: 75,
+  avatar_url: null,
+  bio: "Exploring SafeHer in demo mode",
+};
+
 const ProfilePage = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isDemo } = useAuth();
   const navigate = useNavigate();
   const { sharing, startSharing, stopSharing, position } = useLocationSharing();
   const { data: contacts, isLoading: contactsLoading } = useEmergencyContacts();
@@ -22,6 +29,7 @@ const ProfilePage = () => {
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
     queryFn: async () => {
+      if (isDemo) return DEMO_PROFILE;
       const { data } = await supabase.from("profiles").select("*").eq("id", user!.id).single();
       return data;
     },

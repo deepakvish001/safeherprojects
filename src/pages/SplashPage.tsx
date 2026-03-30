@@ -1,6 +1,7 @@
 import { Shield, MapPin, Bell, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const features = [
   {
@@ -28,6 +29,7 @@ const features = [
 
 const SplashPage = () => {
   const navigate = useNavigate();
+  const { enterDemoMode } = useAuth();
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 overflow-hidden relative">
@@ -112,6 +114,13 @@ const SplashPage = () => {
         >
           Get Started
           <Shield className="w-5 h-5" />
+        </motion.button>
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          onClick={() => { enterDemoMode(); navigate("/"); }}
+          className="w-full py-3 rounded-2xl border border-border text-muted-foreground font-semibold text-sm hover:text-foreground hover:border-primary/50 transition-colors"
+        >
+          Explore Demo Mode →
         </motion.button>
         <p className="text-center text-[11px] text-muted-foreground">
           Protecting women travelers across India 🇮🇳

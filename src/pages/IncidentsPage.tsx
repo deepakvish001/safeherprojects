@@ -34,7 +34,7 @@ const timeAgo = (dateStr: string) => {
 };
 
 const IncidentsPage = () => {
-  const { user } = useAuth();
+  const { user, isDemo } = useAuth();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<"feed" | "report">("feed");
@@ -73,6 +73,12 @@ const IncidentsPage = () => {
   const submitReport = async () => {
     if (!category || !title.trim()) {
       toast.error("Please select a category and add a title");
+      return;
+    }
+    if (isDemo) {
+      toast.info("Sign up to report incidents — demo mode is read-only");
+      resetForm();
+      setView("feed");
       return;
     }
     const { error } = await supabase.from("incidents").insert({
