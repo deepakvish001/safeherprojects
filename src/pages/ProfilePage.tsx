@@ -1,14 +1,47 @@
-import { Shield, MapPin, Clock, Plus, Share2 } from "lucide-react";
+import { Shield, MapPin, Clock, Plus, LogOut, Trash2, Phone } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { useLocationSharing } from "@/hooks/useLocationSharing";
+import { useEmergencyContacts, useAddEmergencyContact, useDeleteEmergencyContact } from "@/hooks/useEmergencyContacts";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 const ProfilePage = () => {
-  const [sharing, setSharing] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { sharing, startSharing, stopSharing, position } = useLocationSharing();
+  const { data: contacts, isLoading: contactsLoading } = useEmergencyContacts();
+  const addContact = useAddEmergencyContact();
+  const deleteContact = useDeleteEmergencyContact();
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newContact, setNewContact] = useState({ name: "", phone: "", relationship: "Friend" });
 
-  const toggleSharing = () => {
-    setSharing(!sharing);
-    toast.success(sharing ? "Location sharing stopped" : "Location sharing started with trusted contacts");
+  const { data: profile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: async () => {
+      const { data } = await supabase.from("profiles").select("*").eq("id", user!.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  const handleAddContact = async () => {
+    if (!newContact.name.trim() || !newContact.phone.trim()) {
+      toast.error("Name and phone are required");
+      return;
+    }
+    await addContact.mutateAsync(newContact);
+    toast.success("Contact added!");
+    setNewContact({ name: "", phone: "", relationship: "Friend" });
+    setShowAddForm(false);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/auth");
   };
 
   return (
@@ -19,12 +52,12 @@ const ProfilePage = () => {
           👩
         </div>
         <div>
-          <h2 className="text-xl font-black text-foreground">Sarah Johnson</h2>
-          <p className="text-sm text-muted-foreground">Solo Traveler • Verified ✓</p>
+          <h2 className="text-xl font-black text-foreground">{profile?.full_name || "Loading..."}</h2>
+          <p className="text-sm text-muted-foreground">{user?.email}</p>
         </div>
         <div className="flex items-center justify-center gap-2">
           <Shield className="w-4 h-4 text-safe" />
-          <span className="text-sm font-bold text-safe">Trust Score: 92/100</span>
+          <span className="text-sm font-bold text-safe">Trust Score: {profile?.trust_score || 50}/100</span>
         </div>
       </div>
 
@@ -35,11 +68,13 @@ const ProfilePage = () => {
             <MapPin className={`w-5 h-5 ${sharing ? "text-safe" : "text-muted-foreground"}`} />
             <div>
               <p className="text-sm font-bold text-foreground">Live Location Sharing</p>
-              <p className="text-xs text-muted-foreground">{sharing ? "Active • 2 contacts" : "Off"}</p>
+              <p className="text-xs text-muted-foreground">
+                {sharing ? `Active • ${position ? `${position.lat.toFixed(4)}, ${position.lng.toFixed(4)}` : "Getting location..."}` : "Off"}
+              </p>
             </div>
           </div>
           <button
-            onClick={toggleSharing}
+            onClick={sharing ? stopSharing : startSharing}
             className={`w-12 h-7 rounded-full transition-colors relative ${sharing ? "bg-safe" : "bg-muted"}`}
           >
             <div className={`w-5 h-5 rounded-full bg-foreground absolute top-1 transition-all ${sharing ? "right-1" : "left-1"}`} />
@@ -47,57 +82,56 @@ const ProfilePage = () => {
         </div>
       </div>
 
-      {/* Trip Plans */}
-      <div className="glass-card rounded-2xl p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-            <Clock className="w-4 h-4 text-secondary" />
-            Active Trips
-          </h3>
-          <button className="w-7 h-7 rounded-full bg-secondary/10 flex items-center justify-center">
-            <Plus className="w-4 h-4 text-secondary" />
-          </button>
-        </div>
-
-        <div className="bg-secondary/5 rounded-xl p-3 space-y-2">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-foreground">Delhi → Jaipur</p>
-            <span className="text-xs bg-safe/10 text-safe px-2 py-0.5 rounded-full font-semibold">Active</span>
-          </div>
-          <p className="text-xs text-muted-foreground">Mar 30 – Apr 2, 2026</p>
-          <div className="flex items-center gap-2">
-            <Share2 className="w-3 h-3 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">Shared with Mom, Best Friend</span>
-          </div>
-        </div>
-      </div>
-
       {/* Emergency Contacts */}
       <div className="glass-card rounded-2xl p-4 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-sm text-foreground">Emergency Contacts</h3>
-          <button className="text-xs text-primary font-semibold">+ Add</button>
+          <button onClick={() => setShowAddForm(!showAddForm)} className="text-xs text-primary font-semibold">
+            {showAddForm ? "Cancel" : "+ Add"}
+          </button>
         </div>
-        {[
-          { name: "Mom", phone: "+91 98765 43210", relation: "Parent" },
-          { name: "Priya", phone: "+91 87654 32109", relation: "Friend" },
-        ].map((c) => (
-          <div key={c.name} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-            <div>
-              <p className="text-sm font-semibold text-foreground">{c.name}</p>
-              <p className="text-xs text-muted-foreground">{c.relation} • {c.phone}</p>
+
+        {showAddForm && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="space-y-2 p-3 bg-muted/50 rounded-xl">
+            <input placeholder="Name" value={newContact.name} onChange={(e) => setNewContact({ ...newContact, name: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground text-sm" />
+            <input placeholder="+1 555-123-4567" value={newContact.phone} onChange={(e) => setNewContact({ ...newContact, phone: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground placeholder:text-muted-foreground text-sm" />
+            <select value={newContact.relationship} onChange={(e) => setNewContact({ ...newContact, relationship: e.target.value })} className="w-full px-3 py-2 rounded-lg bg-muted border border-border text-foreground text-sm">
+              {["Parent", "Sibling", "Partner", "Friend", "Other"].map((r) => <option key={r}>{r}</option>)}
+            </select>
+            <button onClick={handleAddContact} disabled={addContact.isPending} className="w-full py-2 rounded-lg bg-primary text-primary-foreground text-sm font-bold">
+              {addContact.isPending ? "Saving..." : "Add Contact"}
+            </button>
+          </motion.div>
+        )}
+
+        {contactsLoading ? (
+          <p className="text-xs text-muted-foreground">Loading contacts...</p>
+        ) : contacts && contacts.length > 0 ? (
+          contacts.map((c) => (
+            <div key={c.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
+              <div className="flex items-center gap-3">
+                <Phone className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{c.name} {c.is_primary && <span className="text-[10px] text-primary font-bold">PRIMARY</span>}</p>
+                  <p className="text-xs text-muted-foreground">{c.relationship} • {c.phone}</p>
+                </div>
+              </div>
+              <button onClick={() => deleteContact.mutate(c.id)} className="p-1.5 rounded-full hover:bg-destructive/10">
+                <Trash2 className="w-3.5 h-3.5 text-destructive" />
+              </button>
             </div>
-          </div>
-        ))}
+          ))
+        ) : (
+          <button onClick={() => navigate("/onboarding")} className="w-full py-3 rounded-xl border-2 border-dashed border-border text-muted-foreground text-sm font-semibold hover:border-primary/50 hover:text-primary transition-colors">
+            + Set Up Emergency Contacts
+          </button>
+        )}
       </div>
 
-      {/* Incident Reports */}
-      <div className="glass-card rounded-2xl p-4 space-y-3">
-        <h3 className="font-bold text-sm text-foreground">My Reports</h3>
-        <button className="w-full py-3 rounded-xl border-2 border-dashed border-border text-muted-foreground text-sm font-semibold hover:border-primary/50 hover:text-primary transition-colors">
-          + Report an Incident
-        </button>
-      </div>
+      {/* Sign Out */}
+      <button onClick={handleSignOut} className="w-full py-3 rounded-xl glass-card text-destructive font-semibold flex items-center justify-center gap-2">
+        <LogOut className="w-4 h-4" /> Sign Out
+      </button>
     </div>
   );
 };

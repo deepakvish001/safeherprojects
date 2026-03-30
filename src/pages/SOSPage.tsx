@@ -1,21 +1,23 @@
-import { Shield, Volume2 } from "lucide-react";
+import { Shield, Volume2, Phone } from "lucide-react";
 import SOSButton from "@/components/SOSButton";
 import FakeCall from "@/components/FakeCall";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
+import { useNavigate } from "react-router-dom";
 
 const SOSPage = () => {
   const [alarmActive, setAlarmActive] = useState(false);
+  const { data: contacts, isLoading } = useEmergencyContacts();
+  const navigate = useNavigate();
 
   const triggerAlarm = () => {
     setAlarmActive(true);
     toast.warning("🔊 Alarm activated! Playing loud siren.");
-    // In production: play actual loud audio
     setTimeout(() => setAlarmActive(false), 5000);
   };
 
-  // Shake detection
   useEffect(() => {
     let lastX = 0, lastY = 0, lastZ = 0;
     let shakeCount = 0;
@@ -50,7 +52,6 @@ const SOSPage = () => {
         <p className="text-sm text-muted-foreground">Press the button below or shake your phone</p>
       </div>
 
-      {/* Main SOS */}
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -63,7 +64,6 @@ const SOSPage = () => {
       <div className="space-y-3">
         <h3 className="text-sm font-bold text-foreground">Safety Tools</h3>
         <FakeCall />
-
         <button
           onClick={triggerAlarm}
           className="flex items-center gap-3 w-full p-4 rounded-xl glass-card hover:border-warning/50 transition-colors"
@@ -78,24 +78,34 @@ const SOSPage = () => {
         </button>
       </div>
 
-      {/* Emergency Contacts */}
+      {/* Emergency Contacts from DB */}
       <div className="glass-card rounded-2xl p-4 space-y-3">
-        <h3 className="font-bold text-sm text-foreground">Emergency Contacts</h3>
-        {[
-          { name: "Mom", phone: "+91 98765 43210" },
-          { name: "Best Friend", phone: "+91 87654 32109" },
-          { name: "Local Police", phone: "112" },
-        ].map((c) => (
-          <div key={c.name} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-            <div>
-              <p className="text-sm font-semibold text-foreground">{c.name}</p>
-              <p className="text-xs text-muted-foreground">{c.phone}</p>
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-sm text-foreground">Emergency Contacts</h3>
+          <button onClick={() => navigate("/profile")} className="text-xs text-primary font-semibold">Manage</button>
+        </div>
+        {isLoading ? (
+          <p className="text-xs text-muted-foreground">Loading...</p>
+        ) : contacts && contacts.length > 0 ? (
+          contacts.map((c) => (
+            <div key={c.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
+              <div className="flex items-center gap-3">
+                <Phone className="w-4 h-4 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{c.name}</p>
+                  <p className="text-xs text-muted-foreground">{c.relationship} • {c.phone}</p>
+                </div>
+              </div>
+              <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="text-xs bg-safe/10 text-safe font-bold px-3 py-1.5 rounded-full">
+                Call
+              </a>
             </div>
-            <a href={`tel:${c.phone.replace(/\s/g, "")}`} className="text-xs bg-safe/10 text-safe font-bold px-3 py-1.5 rounded-full">
-              Call
-            </a>
-          </div>
-        ))}
+          ))
+        ) : (
+          <button onClick={() => navigate("/onboarding")} className="w-full py-3 rounded-xl border-2 border-dashed border-border text-muted-foreground text-sm font-semibold hover:border-primary/50 hover:text-primary transition-colors">
+            + Set Up Emergency Contacts
+          </button>
+        )}
       </div>
     </div>
   );
