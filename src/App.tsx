@@ -29,9 +29,16 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AuthRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isDemo } = useAuth();
   if (loading) return null;
-  if (user) return <Navigate to="/" replace />;
+  if (user || isDemo) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};
+
+const SplashRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading, isDemo } = useAuth();
+  if (loading) return null;
+  if (user || isDemo) return <Navigate to="/" replace />;
   return <>{children}</>;
 };
 
