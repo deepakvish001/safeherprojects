@@ -4,8 +4,10 @@ import SafetyScore from "@/components/SafetyScore";
 import SOSButton from "@/components/SOSButton";
 import { motion } from "framer-motion";
 import { DEMO_INCIDENTS } from "@/data/incidents";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
   return (
     <div className="relative">
       {/* Header */}
@@ -48,12 +50,13 @@ const Index = () => {
         {/* Quick Actions */}
         <div className="grid grid-cols-3 gap-3">
           {[
-            { icon: "🆘", label: "Quick SOS", desc: "1-tap alert" },
-            { icon: "📍", label: "Share Location", desc: "Real-time" },
-            { icon: "🚨", label: "Fake Call", desc: "Escape tool" },
+            { icon: "🆘", label: "Quick SOS", desc: "1-tap alert", path: "/sos" },
+            { icon: "📍", label: "Live Track", desc: "Real-time", path: "/live-tracking" },
+            { icon: "🚨", label: "Fake Call", desc: "Escape tool", path: "/sos" },
           ].map((action) => (
             <div
               key={action.label}
+              onClick={() => navigate(action.path)}
               className="glass-card rounded-xl p-3 text-center cursor-pointer hover:border-primary/50 transition-colors"
             >
               <div className="text-2xl mb-1">{action.icon}</div>

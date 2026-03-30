@@ -15,6 +15,7 @@ import IncidentsPage from "./pages/IncidentsPage";
 import TripsPage from "./pages/TripsPage";
 import AuthPage from "./pages/AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
+import LiveTrackingPage from "./pages/LiveTrackingPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -52,6 +53,7 @@ const App = () => (
               <Route path="/incidents" element={<IncidentsPage />} />
               <Route path="/trips" element={<TripsPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/live-tracking" element={<LiveTrackingPage />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
