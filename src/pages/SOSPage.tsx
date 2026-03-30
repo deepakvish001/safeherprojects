@@ -1,4 +1,4 @@
-import { Shield, Volume2, Phone, Mic, MicOff } from "lucide-react";
+import { Shield, Volume2, Phone, Mic, MicOff, Vibrate } from "lucide-react";
 import SOSButton from "@/components/SOSButton";
 import FakeCall from "@/components/FakeCall";
 import { toast } from "sonner";
@@ -23,6 +23,10 @@ const SOSPage = () => {
     onTriggered: onVoiceSOS,
     enabled: voiceEnabled,
   });
+
+  const simulateShake = () => {
+    toast.error("🆘 Shake detected! SOS triggered.", { description: "Simulated shake for demo" });
+  };
 
   const triggerAlarm = () => {
     setAlarmActive(true);
@@ -61,7 +65,7 @@ const SOSPage = () => {
       <div className="text-center space-y-2">
         <Shield className="w-12 h-12 text-primary mx-auto" />
         <h1 className="text-2xl font-black text-foreground">Emergency SOS</h1>
-        <p className="text-sm text-muted-foreground">Press the button below or shake your phone</p>
+        <p className="text-sm text-muted-foreground">Press the button, shake your phone, or say "Help"</p>
       </div>
 
       <motion.div
@@ -98,6 +102,21 @@ const SOSPage = () => {
         )}
 
         <FakeCall />
+
+        {/* Simulate Shake for Demo */}
+        <button
+          onClick={simulateShake}
+          className="flex items-center gap-3 w-full p-4 rounded-xl glass-card hover:border-secondary/50 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
+            <Vibrate className="w-5 h-5 text-secondary" />
+          </div>
+          <div className="text-left">
+            <p className="font-semibold text-foreground">Simulate Shake</p>
+            <p className="text-xs text-muted-foreground">Test shake-to-SOS without a device</p>
+          </div>
+        </button>
+
         <button
           onClick={triggerAlarm}
           className="flex items-center gap-3 w-full p-4 rounded-xl glass-card hover:border-warning/50 transition-colors"
