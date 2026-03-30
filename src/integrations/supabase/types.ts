@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      emergency_contacts: {
+        Row: {
+          created_at: string
+          id: string
+          is_primary: boolean
+          name: string
+          phone: string
+          relationship: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          name: string
+          phone: string
+          relationship?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_primary?: boolean
+          name?: string
+          phone?: string
+          relationship?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       guardian_messages: {
         Row: {
           content: string
@@ -124,6 +154,47 @@ export type Database = {
         }
         Relationships: []
       }
+      location_shares: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean
+          last_lat: number | null
+          last_lng: number | null
+          last_updated_at: string | null
+          shared_with_contact_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_lat?: number | null
+          last_lng?: number | null
+          last_updated_at?: string | null
+          shared_with_contact_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          last_lat?: number | null
+          last_lng?: number | null
+          last_updated_at?: string | null
+          shared_with_contact_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "location_shares_shared_with_contact_id_fkey"
+            columns: ["shared_with_contact_id"]
+            isOneToOne: false
+            referencedRelation: "emergency_contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -169,6 +240,39 @@ export type Database = {
           trust_score?: number
           updated_at?: string
           verified?: boolean
+        }
+        Relationships: []
+      }
+      sos_events: {
+        Row: {
+          created_at: string
+          id: string
+          location_lat: number | null
+          location_lng: number | null
+          message: string | null
+          resolved_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          message?: string | null
+          resolved_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          message?: string | null
+          resolved_at?: string | null
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
