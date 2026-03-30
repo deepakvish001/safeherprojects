@@ -172,12 +172,107 @@ export type Database = {
         }
         Relationships: []
       }
+      trip_shares: {
+        Row: {
+          created_at: string
+          id: string
+          notify_on_deviation: boolean
+          shared_with_email: string | null
+          shared_with_name: string
+          shared_with_phone: string | null
+          trip_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notify_on_deviation?: boolean
+          shared_with_email?: string | null
+          shared_with_name: string
+          shared_with_phone?: string | null
+          trip_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notify_on_deviation?: boolean
+          shared_with_email?: string | null
+          shared_with_name?: string
+          shared_with_phone?: string | null
+          trip_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_shares_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trips: {
+        Row: {
+          created_at: string
+          destination: string
+          destination_lat: number | null
+          destination_lng: number | null
+          end_date: string
+          id: string
+          notes: string | null
+          origin: string
+          origin_lat: number | null
+          origin_lng: number | null
+          start_date: string
+          status: Database["public"]["Enums"]["trip_status"]
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          destination: string
+          destination_lat?: number | null
+          destination_lng?: number | null
+          end_date: string
+          id?: string
+          notes?: string | null
+          origin: string
+          origin_lat?: number | null
+          origin_lng?: number | null
+          start_date: string
+          status?: Database["public"]["Enums"]["trip_status"]
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          destination?: string
+          destination_lat?: number | null
+          destination_lng?: number | null
+          end_date?: string
+          id?: string
+          notes?: string | null
+          origin?: string
+          origin_lat?: number | null
+          origin_lng?: number | null
+          start_date?: string
+          status?: Database["public"]["Enums"]["trip_status"]
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      owns_trip: {
+        Args: { _trip_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       incident_category:
@@ -189,6 +284,7 @@ export type Database = {
         | "poor_lighting"
         | "other"
       incident_severity: "low" | "medium" | "high" | "critical"
+      trip_status: "planned" | "active" | "completed" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -326,6 +422,7 @@ export const Constants = {
         "other",
       ],
       incident_severity: ["low", "medium", "high", "critical"],
+      trip_status: ["planned", "active", "completed", "cancelled"],
     },
   },
 } as const
