@@ -25,6 +25,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDemo, setIsDemo] = useState(false);
+
+  const enterDemoMode = () => {
+    const demoUser = {
+      id: "demo-user-id",
+      email: "demo@safeher.app",
+      user_metadata: { full_name: "Demo User" },
+    } as unknown as User;
+    setUser(demoUser);
+    setIsDemo(true);
+    setLoading(false);
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
