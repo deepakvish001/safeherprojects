@@ -5,9 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-
-type Category = "harassment" | "stalking" | "unsafe_area" | "theft" | "suspicious_activity" | "poor_lighting" | "other";
-type Severity = "low" | "medium" | "high" | "critical";
+import { type Category, type Severity, CATEGORIES, SEVERITY_CONFIG } from "@/data/incidentTypes";
 
 const CATEGORIES: { value: Category; label: string; icon: string }[] = [
   { value: "harassment", label: "Harassment", icon: "🚨" },
