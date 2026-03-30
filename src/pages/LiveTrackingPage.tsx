@@ -20,9 +20,12 @@ const LiveTrackingPage = () => {
     { id: string; name: string; lat: number; lng: number; timestamp: number }[]
   >([]);
 
+  // Fallback position when geolocation is unavailable (Delhi center)
+  const effectivePosition = position || (sharing ? { lat: 28.6139, lng: 77.209 } : null);
+
   // Simulate demo tracked contacts with moving positions
   useEffect(() => {
-    if (!sharing || !position) return;
+    if (!sharing || !effectivePosition) return;
 
     // Create demo tracked contacts that move slightly around user position
     const interval = setInterval(() => {
