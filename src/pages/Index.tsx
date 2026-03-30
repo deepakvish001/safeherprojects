@@ -7,6 +7,7 @@ import { DEMO_INCIDENTS } from "@/data/incidents";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
   return (
     <div className="relative">
       {/* Header */}
