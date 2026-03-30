@@ -24,6 +24,10 @@ const SOSPage = () => {
     enabled: voiceEnabled,
   });
 
+  const simulateShake = () => {
+    toast.error("🆘 Shake detected! SOS triggered.", { description: "Simulated shake for demo" });
+  };
+
   const triggerAlarm = () => {
     setAlarmActive(true);
     toast.warning("🔊 Alarm activated! Playing loud siren.");
