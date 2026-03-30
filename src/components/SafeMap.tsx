@@ -1,6 +1,8 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import type { IncidentMarker } from "@/data/incidents";
+import { CATEGORIES } from "@/data/incidentTypes";
 
 // Fix default marker icons
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -28,13 +30,30 @@ const serviceIcons: Record<string, string> = {
   hotel: "🏨",
 };
 
+const severityColors: Record<string, string> = {
+  low: "#94A3B8",
+  medium: "#F4A261",
+  high: "#E63946",
+  critical: "#DC2626",
+};
+
+const severityRadius: Record<string, number> = {
+  low: 150,
+  medium: 250,
+  high: 350,
+  critical: 450,
+};
+
 interface SafeMapProps {
   className?: string;
+  incidents?: IncidentMarker[];
+  showIncidents?: boolean;
 }
 
-const SafeMap = ({ className }: SafeMapProps) => {
+const SafeMap = ({ className, incidents = [], showIncidents = true }: SafeMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
+  const incidentLayerRef = useRef<L.LayerGroup | null>(null);
 
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
@@ -78,11 +97,57 @@ const SafeMap = ({ className }: SafeMapProps) => {
         .bindPopup(svc.name);
     });
 
+    // Create incident layer group
+    incidentLayerRef.current = L.layerGroup().addTo(map);
+
     return () => {
       map.remove();
       mapInstance.current = null;
+      incidentLayerRef.current = null;
     };
   }, []);
+
+  // Update incident overlays when data changes
+  useEffect(() => {
+    if (!incidentLayerRef.current || !showIncidents) return;
+
+    incidentLayerRef.current.clearLayers();
+
+    incidents.forEach((incident) => {
+      const color = severityColors[incident.severity] || "#F4A261";
+      const radius = severityRadius[incident.severity] || 250;
+      const catInfo = CATEGORIES.find((c) => c.value === incident.category);
+      const icon = catInfo?.icon || "⚠️";
+
+      // Pulsing circle overlay
+      L.circle([incident.lat, incident.lng], {
+        radius,
+        color,
+        fillColor: color,
+        fillOpacity: 0.15,
+        weight: 1.5,
+        dashArray: "5 5",
+      })
+        .addTo(incidentLayerRef.current!)
+        .bindPopup(
+          `<div style="min-width:160px">` +
+          `<b>${icon} ${incident.title}</b><br/>` +
+          `<span style="color:${color};font-weight:bold;text-transform:uppercase;font-size:11px">${incident.severity}</span>` +
+          `<br/><span style="font-size:12px;color:#94A3B8">📍 ${incident.locationName}</span>` +
+          `<br/><span style="font-size:11px;color:#94A3B8">👍 ${incident.upvotes} reports • ${incident.createdAt}</span>` +
+          `</div>`
+        );
+
+      // Icon marker at center
+      L.marker([incident.lat, incident.lng], {
+        icon: L.divIcon({
+          html: `<div style="font-size:18px;text-align:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))">${icon}</div>`,
+          iconSize: [24, 24],
+          className: "bg-transparent",
+        }),
+      }).addTo(incidentLayerRef.current!);
+    });
+  }, [incidents, showIncidents]);
 
   return (
     <div className={className}>
