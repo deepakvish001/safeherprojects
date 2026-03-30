@@ -55,8 +55,8 @@ const SOSButton = () => {
       duration: 5000,
     });
 
-    // Send SMS via edge function if user is authenticated
-    if (user) {
+    // Send SMS via edge function if user is authenticated (skip for demo mode)
+    if (user && user.id !== "demo-user-id") {
       try {
         const { data, error } = await supabase.functions.invoke("send-sos-sms", {
           body: {
@@ -64,7 +64,7 @@ const SOSButton = () => {
             lat,
             lng,
             message: "Emergency! I need help immediately.",
-            from_phone: "+15017122661", // Twilio number - should be configured
+            from_phone: "+15017122661",
           },
         });
         if (error) {
@@ -78,7 +78,7 @@ const SOSButton = () => {
       } catch (err) {
         console.error("SOS function error:", err);
       }
-    } else {
+    } else if (!user) {
       toast.warning("Sign in to send SMS alerts to emergency contacts");
     }
   };
