@@ -102,6 +102,21 @@ const SOSPage = () => {
         )}
 
         <FakeCall />
+
+        {/* Simulate Shake for Demo */}
+        <button
+          onClick={simulateShake}
+          className="flex items-center gap-3 w-full p-4 rounded-xl glass-card hover:border-secondary/50 transition-colors"
+        >
+          <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center">
+            <Vibrate className="w-5 h-5 text-secondary" />
+          </div>
+          <div className="text-left">
+            <p className="font-semibold text-foreground">Simulate Shake</p>
+            <p className="text-xs text-muted-foreground">Test shake-to-SOS without a device</p>
+          </div>
+        </button>
+
         <button
           onClick={triggerAlarm}
           className="flex items-center gap-3 w-full p-4 rounded-xl glass-card hover:border-warning/50 transition-colors"
