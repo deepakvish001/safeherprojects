@@ -1,4 +1,4 @@
-import { Shield, Volume2, Phone, Mic, MicOff } from "lucide-react";
+import { Shield, Volume2, Phone, Mic, MicOff, Vibrate } from "lucide-react";
 import SOSButton from "@/components/SOSButton";
 import FakeCall from "@/components/FakeCall";
 import { toast } from "sonner";
