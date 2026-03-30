@@ -1,12 +1,7 @@
 import SafeMap from "@/components/SafeMap";
 import { Map, AlertTriangle, Navigation } from "lucide-react";
 import { motion } from "framer-motion";
-
-const dangerZoneList = [
-  { name: "Chandni Chowk Late Night", level: "High", reports: 12 },
-  { name: "Old Delhi Station Area", level: "Medium", reports: 7 },
-  { name: "Sarai Kale Khan", level: "High", reports: 15 },
-];
+import { DEMO_INCIDENTS } from "@/data/incidents";
 
 const RoutesPage = () => {
   return (
@@ -19,7 +14,7 @@ const RoutesPage = () => {
         <p className="text-sm text-muted-foreground">Navigate safely with danger zone alerts</p>
       </div>
 
-      <SafeMap className="h-[40vh] mx-4 rounded-2xl overflow-hidden" />
+      <SafeMap className="h-[40vh] mx-4 rounded-2xl overflow-hidden" incidents={DEMO_INCIDENTS} />
 
       {/* Route Suggestion */}
       <motion.div
@@ -43,22 +38,22 @@ const RoutesPage = () => {
         </div>
       </motion.div>
 
-      {/* Danger Zones */}
+      {/* Danger Zones - now driven by incidents */}
       <div className="mx-4 glass-card rounded-2xl p-4 space-y-3">
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-danger" />
-          <h3 className="font-bold text-sm text-foreground">Nearby Danger Zones</h3>
+          <h3 className="font-bold text-sm text-foreground">Reported Incidents Nearby</h3>
         </div>
-        {dangerZoneList.map((zone) => (
-          <div key={zone.name} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
+        {DEMO_INCIDENTS.filter((i) => i.severity === "high" || i.severity === "critical").map((incident) => (
+          <div key={incident.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
             <div>
-              <p className="text-sm font-semibold text-foreground">{zone.name}</p>
-              <p className="text-xs text-muted-foreground">{zone.reports} reports</p>
+              <p className="text-sm font-semibold text-foreground">{incident.title}</p>
+              <p className="text-xs text-muted-foreground">{incident.locationName} • {incident.createdAt}</p>
             </div>
             <span className={`text-xs font-bold px-3 py-1 rounded-full ${
-              zone.level === "High" ? "bg-danger/10 text-danger" : "bg-warning/10 text-warning"
+              incident.severity === "critical" ? "bg-danger/10 text-danger" : "bg-primary/10 text-primary"
             }`}>
-              {zone.level}
+              {incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1)}
             </span>
           </div>
         ))}

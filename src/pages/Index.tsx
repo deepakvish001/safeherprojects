@@ -3,6 +3,7 @@ import SafeMap from "@/components/SafeMap";
 import SafetyScore from "@/components/SafetyScore";
 import SOSButton from "@/components/SOSButton";
 import { motion } from "framer-motion";
+import { DEMO_INCIDENTS } from "@/data/incidents";
 
 const Index = () => {
   return (
@@ -27,9 +28,9 @@ const Index = () => {
         </div>
       </div>
 
-      {/* Map */}
+      {/* Map with incident overlays */}
       <div className="pt-14">
-        <SafeMap className="h-[55vh]" />
+        <SafeMap className="h-[55vh]" incidents={DEMO_INCIDENTS} />
       </div>
 
       {/* Bottom Panel */}
