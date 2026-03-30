@@ -36,6 +36,13 @@ const getTrustColor = (score: number) => {
   return "text-danger";
 };
 
+const FALLBACK_GUARDIANS: Guardian[] = [
+  { id: "demo-1", full_name: "Ananya Sharma", trust_score: 94, verified: true, bio: "Local resident & certified first-aid responder. Happy to help solo travelers navigate safely.", skills: ["First Aid", "Local Guide", "Self Defense"], languages: ["Hindi", "English"], location_lat: 28.618, location_lng: 77.21 },
+  { id: "demo-2", full_name: "Priya Patel", trust_score: 87, verified: true, bio: "Tour guide with 5 years experience. I know every safe route in the city.", skills: ["Translation", "Local Guide"], languages: ["Hindi", "English", "Gujarati"], location_lat: 28.625, location_lng: 77.215 },
+  { id: "demo-3", full_name: "Meera Reddy", trust_score: 78, verified: false, bio: "Nurse at city hospital. Can provide medical guidance and safe accommodation referrals.", skills: ["Medical", "Accommodation"], languages: ["Telugu", "English"], location_lat: 28.61, location_lng: 77.22 },
+  { id: "demo-4", full_name: "Kavita Singh", trust_score: 91, verified: true, bio: "Lawyer and self-defense instructor. Dedicated to women's safety advocacy.", skills: ["Self Defense", "Legal Aid"], languages: ["Hindi", "English", "Punjabi"], location_lat: 28.63, location_lng: 77.205 },
+];
+
 const GuardiansPage = () => {
   const { user } = useAuth();
   const [guardians, setGuardians] = useState<Guardian[]>([]);
@@ -54,7 +61,11 @@ const GuardiansPage = () => {
         .eq("is_guardian", true)
         .neq("id", user?.id || "")
         .order("trust_score", { ascending: false });
-      if (data) setGuardians(data as unknown as Guardian[]);
+      if (data && data.length > 0) {
+        setGuardians(data as unknown as Guardian[]);
+      } else {
+        setGuardians(FALLBACK_GUARDIANS);
+      }
       setLoading(false);
     };
     fetchGuardians();
