@@ -60,7 +60,7 @@ const Index = () => {
 
       {/* Map with incident overlays */}
       <div className="pt-14">
-        <SafeMap className="h-[55vh]" incidents={DEMO_INCIDENTS} />
+        <SafeMap className="h-[55vh]" incidents={incidents} />
       </div>
 
       {/* Bottom Panel */}
