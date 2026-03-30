@@ -1,0 +1,70 @@
+import SafeMap from "@/components/SafeMap";
+import { Map, AlertTriangle, Navigation } from "lucide-react";
+import { motion } from "framer-motion";
+
+const dangerZoneList = [
+  { name: "Chandni Chowk Late Night", level: "High", reports: 12 },
+  { name: "Old Delhi Station Area", level: "Medium", reports: 7 },
+  { name: "Sarai Kale Khan", level: "High", reports: 15 },
+];
+
+const RoutesPage = () => {
+  return (
+    <div className="space-y-4">
+      <div className="px-4 pt-4 space-y-2">
+        <h1 className="text-2xl font-black text-foreground flex items-center gap-2">
+          <Map className="w-6 h-6 text-secondary" />
+          Safe Routes
+        </h1>
+        <p className="text-sm text-muted-foreground">Navigate safely with danger zone alerts</p>
+      </div>
+
+      <SafeMap className="h-[40vh] mx-4 rounded-2xl overflow-hidden" />
+
+      {/* Route Suggestion */}
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="mx-4 glass-card rounded-2xl p-4 space-y-3"
+      >
+        <div className="flex items-center gap-2">
+          <Navigation className="w-5 h-5 text-safe" />
+          <h3 className="font-bold text-sm text-foreground">Recommended Safe Route</h3>
+        </div>
+        <div className="bg-safe/5 rounded-xl p-3">
+          <p className="text-sm text-foreground font-medium">Connaught Place → India Gate</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Via Barakhamba Rd • Well-lit • CCTV coverage • 2.1 km
+          </p>
+          <div className="flex items-center gap-2 mt-2">
+            <span className="text-xs bg-safe/20 text-safe px-2 py-0.5 rounded-full font-semibold">Safety: 89/100</span>
+            <span className="text-xs bg-muted text-muted-foreground px-2 py-0.5 rounded-full">~25 min walk</span>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Danger Zones */}
+      <div className="mx-4 glass-card rounded-2xl p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-danger" />
+          <h3 className="font-bold text-sm text-foreground">Nearby Danger Zones</h3>
+        </div>
+        {dangerZoneList.map((zone) => (
+          <div key={zone.name} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
+            <div>
+              <p className="text-sm font-semibold text-foreground">{zone.name}</p>
+              <p className="text-xs text-muted-foreground">{zone.reports} reports</p>
+            </div>
+            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+              zone.level === "High" ? "bg-danger/10 text-danger" : "bg-warning/10 text-warning"
+            }`}>
+              {zone.level}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default RoutesPage;
