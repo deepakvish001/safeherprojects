@@ -34,7 +34,11 @@ const AuthPage = () => {
       }
       const { error } = await signUp(email, password, fullName);
       if (error) {
-        toast.error(error.message);
+        if (error.message.includes("already registered")) {
+          toast.error("This email is already registered. Try signing in.");
+        } else {
+          toast.error(error.message);
+        }
       } else {
         toast.success("Check your email to confirm your account!");
       }
