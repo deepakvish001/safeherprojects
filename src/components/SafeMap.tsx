@@ -1,6 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import "leaflet.heat";
 import type { IncidentMarker } from "@/data/incidents";
 import { CATEGORIES } from "@/data/incidentTypes";
 
@@ -44,16 +45,26 @@ const severityRadius: Record<string, number> = {
   critical: 450,
 };
 
+const severityIntensity: Record<string, number> = {
+  low: 0.3,
+  medium: 0.5,
+  high: 0.8,
+  critical: 1.0,
+};
+
 interface SafeMapProps {
   className?: string;
   incidents?: IncidentMarker[];
   showIncidents?: boolean;
+  showHeatmap?: boolean;
 }
 
-const SafeMap = ({ className, incidents = [], showIncidents = true }: SafeMapProps) => {
+const SafeMap = ({ className, incidents = [], showIncidents = true, showHeatmap = true }: SafeMapProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<L.Map | null>(null);
   const incidentLayerRef = useRef<L.LayerGroup | null>(null);
+  const heatLayerRef = useRef<any>(null);
+  const [heatmapVisible, setHeatmapVisible] = useState(showHeatmap);
 
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
@@ -104,54 +115,103 @@ const SafeMap = ({ className, incidents = [], showIncidents = true }: SafeMapPro
       map.remove();
       mapInstance.current = null;
       incidentLayerRef.current = null;
+      heatLayerRef.current = null;
     };
   }, []);
 
-  // Update incident overlays when data changes
+  // Update incident overlays + heatmap when data changes
   useEffect(() => {
-    if (!incidentLayerRef.current || !showIncidents) return;
+    if (!incidentLayerRef.current || !mapInstance.current) return;
 
     incidentLayerRef.current.clearLayers();
 
-    incidents.forEach((incident) => {
-      const color = severityColors[incident.severity] || "#F4A261";
-      const radius = severityRadius[incident.severity] || 250;
-      const catInfo = CATEGORIES.find((c) => c.value === incident.category);
-      const icon = catInfo?.icon || "⚠️";
+    if (showIncidents) {
+      incidents.forEach((incident) => {
+        const color = severityColors[incident.severity] || "#F4A261";
+        const radius = severityRadius[incident.severity] || 250;
+        const catInfo = CATEGORIES.find((c) => c.value === incident.category);
+        const icon = catInfo?.icon || "⚠️";
 
-      // Pulsing circle overlay
-      L.circle([incident.lat, incident.lng], {
-        radius,
-        color,
-        fillColor: color,
-        fillOpacity: 0.15,
-        weight: 1.5,
-        dashArray: "5 5",
-      })
-        .addTo(incidentLayerRef.current!)
-        .bindPopup(
-          `<div style="min-width:160px">` +
-          `<b>${icon} ${incident.title}</b><br/>` +
-          `<span style="color:${color};font-weight:bold;text-transform:uppercase;font-size:11px">${incident.severity}</span>` +
-          `<br/><span style="font-size:12px;color:#94A3B8">📍 ${incident.locationName}</span>` +
-          `<br/><span style="font-size:11px;color:#94A3B8">👍 ${incident.upvotes} reports • ${incident.createdAt}</span>` +
-          `</div>`
-        );
+        L.circle([incident.lat, incident.lng], {
+          radius,
+          color,
+          fillColor: color,
+          fillOpacity: 0.15,
+          weight: 1.5,
+          dashArray: "5 5",
+        })
+          .addTo(incidentLayerRef.current!)
+          .bindPopup(
+            `<div style="min-width:160px">` +
+            `<b>${icon} ${incident.title}</b><br/>` +
+            `<span style="color:${color};font-weight:bold;text-transform:uppercase;font-size:11px">${incident.severity}</span>` +
+            `<br/><span style="font-size:12px;color:#94A3B8">📍 ${incident.locationName}</span>` +
+            `<br/><span style="font-size:11px;color:#94A3B8">👍 ${incident.upvotes} reports • ${incident.createdAt}</span>` +
+            `</div>`
+          );
 
-      // Icon marker at center
-      L.marker([incident.lat, incident.lng], {
-        icon: L.divIcon({
-          html: `<div style="font-size:18px;text-align:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))">${icon}</div>`,
-          iconSize: [24, 24],
-          className: "bg-transparent",
-        }),
-      }).addTo(incidentLayerRef.current!);
-    });
-  }, [incidents, showIncidents]);
+        L.marker([incident.lat, incident.lng], {
+          icon: L.divIcon({
+            html: `<div style="font-size:18px;text-align:center;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))">${icon}</div>`,
+            iconSize: [24, 24],
+            className: "bg-transparent",
+          }),
+        }).addTo(incidentLayerRef.current!);
+      });
+    }
+
+    // Heatmap layer
+    if (heatLayerRef.current) {
+      mapInstance.current.removeLayer(heatLayerRef.current);
+      heatLayerRef.current = null;
+    }
+
+    if (heatmapVisible && incidents.length > 0) {
+      const heatPoints = incidents.map((i) => [
+        i.lat,
+        i.lng,
+        severityIntensity[i.severity] || 0.5,
+      ] as [number, number, number]);
+
+      // Also add danger zone centers as heat sources
+      dangerZones.forEach((zone) => {
+        heatPoints.push([zone.lat, zone.lng, zone.level === "high" ? 0.9 : 0.5]);
+      });
+
+      heatLayerRef.current = (L as any).heatLayer(heatPoints, {
+        radius: 35,
+        blur: 25,
+        maxZoom: 15,
+        max: 1.0,
+        gradient: {
+          0.2: "#3B82F6",
+          0.4: "#7B2FF7",
+          0.6: "#F4A261",
+          0.8: "#E63946",
+          1.0: "#DC2626",
+        },
+      }).addTo(mapInstance.current);
+    }
+  }, [incidents, showIncidents, heatmapVisible]);
+
+  const toggleHeatmap = () => setHeatmapVisible((v) => !v);
 
   return (
-    <div className={className}>
+    <div className={`relative ${className || ""}`}>
       <div ref={mapRef} className="w-full h-full rounded-xl" style={{ minHeight: "400px" }} />
+      {/* Heatmap toggle */}
+      {incidents.length > 0 && (
+        <button
+          onClick={toggleHeatmap}
+          className={`absolute top-3 right-3 z-[1000] px-3 py-1.5 rounded-lg text-[11px] font-bold backdrop-blur-md border transition-all ${
+            heatmapVisible
+              ? "bg-primary/20 border-primary/40 text-primary-foreground"
+              : "bg-card/80 border-border/50 text-muted-foreground"
+          }`}
+        >
+          🔥 {heatmapVisible ? "Heatmap On" : "Heatmap Off"}
+        </button>
+      )}
     </div>
   );
 };
