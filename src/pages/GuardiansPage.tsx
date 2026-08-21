@@ -140,7 +140,7 @@ const GuardiansPage = () => {
     return (
       <div className="flex flex-col h-[calc(100vh-5rem)]">
         <div className="glass-card border-b border-border/50 px-4 py-3 flex items-center gap-3">
-          <button onClick={() => setChatOpen(false)}>
+          <button onClick={() => setChatOpen(false)} aria-label="Close chat">
             <ChevronLeft className="w-5 h-5 text-muted-foreground" />
           </button>
           <Avatar className="w-9 h-9">
@@ -190,7 +190,7 @@ const GuardiansPage = () => {
             placeholder="Type a message..."
             className="flex-1 bg-muted/50 border-0 text-sm"
           />
-          <Button size="icon" onClick={sendMessage} disabled={!message.trim()}>
+          <Button size="icon" onClick={sendMessage} disabled={!message.trim()} aria-label="Send message">
             <Send className="w-4 h-4" />
           </Button>
         </div>

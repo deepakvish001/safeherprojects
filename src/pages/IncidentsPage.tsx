@@ -118,7 +118,7 @@ const IncidentsPage = () => {
     return (
       <div className="px-4 pt-4 pb-4 space-y-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => setView("feed")}>
+          <button onClick={() => setView("feed")} aria-label="Back to incidents feed">
             <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
           <div>

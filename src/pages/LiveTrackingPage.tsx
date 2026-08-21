@@ -80,7 +80,7 @@ const LiveTrackingPage = () => {
     <div className="flex flex-col h-[calc(100vh-5rem)]">
       {/* Header */}
       <div className="glass-card border-b border-border/50 px-4 py-3 flex items-center gap-3 z-10">
-        <button onClick={() => navigate(-1)}>
+        <button onClick={() => navigate(-1)} aria-label="Go back">
           <ArrowLeft className="w-5 h-5 text-muted-foreground" />
         </button>
         <div className="flex-1">

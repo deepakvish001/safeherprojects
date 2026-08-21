@@ -200,7 +200,7 @@ const TripsPage = () => {
     return (
       <div className="px-4 pt-4 pb-4 space-y-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => { setView("list"); setSelectedTrip(null); }}>
+          <button onClick={() => { setView("list"); setSelectedTrip(null); }} aria-label="Back to trips list">
             <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
           <div className="flex-1">
@@ -287,7 +287,7 @@ const TripsPage = () => {
     return (
       <div className="px-4 pt-4 pb-4 space-y-4">
         <div className="flex items-center gap-3">
-          <button onClick={() => { setView("list"); resetForm(); }}>
+          <button onClick={() => { setView("list"); resetForm(); }} aria-label="Cancel and back to trips list">
             <ArrowLeft className="w-5 h-5 text-muted-foreground" />
           </button>
           <div>
