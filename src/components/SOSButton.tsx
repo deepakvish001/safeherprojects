@@ -50,8 +50,14 @@ const SOSButton = () => {
       console.warn("Could not get location for SOS");
     }
 
-    toast.success("🆘 SOS Alert Sent!", {
-      description: "Emergency contacts are being notified with your location.",
+    // Don't claim the alert was sent until we actually know the outcome —
+    // this used to fire an unconditional "SOS Alert Sent! Emergency
+    // contacts are being notified" success toast right here, before any
+    // send was even attempted. A signed-out user (or one with no emergency
+    // contacts, or a failed SMS send) would be falsely told their contacts
+    // were being notified during a real emergency.
+    toast("🆘 SOS triggered", {
+      description: "Notifying your emergency contacts…",
       duration: 5000,
     });
 
@@ -69,17 +75,18 @@ const SOSButton = () => {
         });
         if (error) {
           console.error("SOS SMS error:", error);
-          toast.error("SMS alerts could not be sent");
+          toast.error("SMS alerts could not be sent. Please call your emergency contacts directly.");
         } else if (data?.sent > 0) {
           toast.success(`📱 ${data.sent} emergency contact(s) notified via SMS`);
         } else if (data?.sent === 0) {
-          toast.warning("No emergency contacts set up. Add them in your profile.");
+          toast.warning("No emergency contacts set up. Add them in your profile — no SMS was sent.");
         }
       } catch (err) {
         console.error("SOS function error:", err);
+        toast.error("SMS alerts could not be sent. Please call your emergency contacts directly.");
       }
     } else if (!user) {
-      toast.warning("Sign in to send SMS alerts to emergency contacts");
+      toast.warning("Sign in to send SMS alerts to emergency contacts — no one was notified.");
     }
   };
 
