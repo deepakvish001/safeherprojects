@@ -7,8 +7,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
-const GATEWAY_URL = 'https://connector-gateway.lovable.dev/twilio';
-
 const BodySchema = z.object({
   user_id: z.string().uuid(),
   lat: z.number().optional(),
@@ -23,11 +21,11 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) throw new Error('LOVABLE_API_KEY is not configured');
+    const TWILIO_ACCOUNT_SID = Deno.env.get('TWILIO_ACCOUNT_SID');
+    if (!TWILIO_ACCOUNT_SID) throw new Error('TWILIO_ACCOUNT_SID is not configured');
 
-    const TWILIO_API_KEY = Deno.env.get('TWILIO_API_KEY');
-    if (!TWILIO_API_KEY) throw new Error('TWILIO_API_KEY is not configured');
+    const TWILIO_AUTH_TOKEN = Deno.env.get('TWILIO_AUTH_TOKEN');
+    if (!TWILIO_AUTH_TOKEN) throw new Error('TWILIO_AUTH_TOKEN is not configured');
 
     const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -74,19 +72,18 @@ serve(async (req) => {
       .eq('id', user_id)
       .single();
 
-    const userName = profile?.full_name || 'A SafeHer user';
+    const userName = profile?.full_name || 'A HerShield user';
     const locationStr = lat && lng ? `\nLocation: https://maps.google.com/?q=${lat},${lng}` : '';
-    const smsBody = `🆘 EMERGENCY ALERT from ${userName}!\n${message || 'SOS has been triggered.'}${locationStr}\n\nThis is an automated alert from SafeHer.`;
+    const smsBody = `🆘 EMERGENCY ALERT from ${userName}!\n${message || 'SOS has been triggered.'}${locationStr}\n\nThis is an automated alert from HerShield.`;
 
     // Send SMS to each contact
     const results = [];
     for (const contact of contacts) {
       try {
-        const response = await fetch(`${GATEWAY_URL}/Messages.json`, {
+        const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-            'X-Connection-Api-Key': TWILIO_API_KEY,
+            'Authorization': `Basic ${btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`)}`,
             'Content-Type': 'application/x-www-form-urlencoded',
           },
           body: new URLSearchParams({
